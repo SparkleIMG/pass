@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Contraseñas Seguras</title>
+    <title>SparklePASS</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -31,29 +31,71 @@
             font-weight: bold;
             background-color: #e0e0e0;
             border-radius: 5px;
+            padding: 10px;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        p {
+            text-align: justify;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Generador de Contraseñas Seguras</h1>
+        <h1>SparklePASS</h1>
+        <p>
+            Esta página genera contraseñas seguras utilizando criptografía avanzada y entropía generada a partir de tus movimientos del ratón y el texto que escribas. 
+            Para una mayor seguridad, se recomienda descargar esta página en HTML y generar las contraseñas directamente desde tu dispositivo sin conexión a internet.
+        </p>
         <label for="length">Longitud de la contraseña:</label>
         <input type="number" id="length" min="8" max="64" value="12">
+        <p>Mueve el ratón y escribe algo para generar aleatoriedad:</p>
+        <textarea id="entropy" rows="4" cols="50" placeholder="Escribe algo aquí..."></textarea>
         <button onclick="generatePassword()">Generar Contraseña</button>
         <p id="password"></p>
     </div>
 
     <script>
+        let entropyData = [];
+
+        function collectEntropy(event) {
+            if (event.type === 'mousemove') {
+                entropyData.push(event.clientX, event.clientY, event.timeStamp);
+            } else if (event.type === 'input') {
+                const inputElement = document.getElementById('entropy');
+                for (let i = 0; i < inputElement.value.length; i++) {
+                    entropyData.push(inputElement.value.charCodeAt(i));
+                }
+            }
+        }
+
         function generatePassword() {
-            const length = document.getElementById('length').value;
+            if (entropyData.length < 100) {
+                alert("Por favor, genera más aleatoriedad moviendo el ratón y escribiendo más texto.");
+                return;
+            }
+
+            const length = parseInt(document.getElementById('length').value, 10);
             const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
             let password = "";
+
+            const entropyArray = new Uint8Array(entropyData);
+            const randomValues = new Uint32Array(length);
+            window.crypto.getRandomValues(randomValues);
+
             for (let i = 0; i < length; i++) {
-                const randomIndex = Math.floor(Math.random() * charset.length);
-                password += charset[randomIndex];
+                const entropyIndex = entropyArray[randomValues[i] % entropyArray.length];
+                password += charset[entropyIndex % charset.length];
             }
+
             document.getElementById('password').textContent = password;
         }
+
+        document.addEventListener('mousemove', collectEntropy);
+        document.getElementById('entropy').addEventListener('input', collectEntropy);
     </script>
 </body>
 </html>
